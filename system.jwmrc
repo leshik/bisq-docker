@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<JWM>
+    <Tray height="24" autohide="off">
+        <TrayButton icon="actions/window-minimize-symbolic.symbolic.png">showdesktop</TrayButton>
+        <Spacer width="2"/>
+        <TrayButton icon="apps/utilities-terminal.png">exec:x-terminal-emulator</TrayButton>
+        <Spacer width="2"/>
+        <TaskList maxwidth="256"/>
+        <Dock/>
+        <Spacer width="2"/>
+        <Clock format="%H:%M"/>
+    </Tray>
+
+    <Desktops width="1" height="1"/>
+
+    <Group>
+        <Option>tiled</Option>
+        <Option>aerosnap</Option>
+    </Group>
+
+    <IconPath>
+        /usr/share/icons/Adwaita/24x24
+    </IconPath>
+
+    <WindowStyle>
+        <Font>Verdana-12</Font>
+        <Width>4</Width>
+        <Height>21</Height>
+        <Corner>3</Corner>
+        <Foreground>#FFFFFF</Foreground>
+        <Background>#555555</Background>
+        <Outline>#000000</Outline>
+        <Opacity>0.5</Opacity>
+        <Active>
+            <Foreground>#FFFFFF</Foreground>
+            <Background>#0077CC</Background>
+            <Outline>#000000</Outline>
+            <Opacity>1.0</Opacity>
+        </Active>
+    </WindowStyle>
+
+    <TrayStyle group="true" list="all">
+        <Font>Verdana-12</Font>
+        <Background>#333333</Background>
+        <Foreground>#FFFFFF</Foreground>
+        <Outline>#000000</Outline>
+        <Opacity>0.75</Opacity>
+    </TrayStyle>
+
+    <TaskListStyle>
+      <Font>Verdana-12</Font>
+      <Active>
+        <Foreground>#FFFFFF</Foreground>
+        <Background>#555555</Background>
+      </Active>
+      <Foreground>#FFFFFF</Foreground>
+      <Background>#333333</Background>
+    </TaskListStyle>
+
+    <PagerStyle>
+        <Outline>#000000</Outline>
+        <Foreground>#555555</Foreground>
+        <Background>#333333</Background>
+        <Text>#FFFFFF</Text>
+        <Active>
+            <Foreground>#0077CC</Foreground>
+            <Background>#004488</Background>
+        </Active>
+    </PagerStyle>
+
+    <MenuStyle>
+        <Font>Verdana-12</Font>
+        <Foreground>#FFFFFF</Foreground>
+        <Background>#333333</Background>
+        <Outline>#000000</Outline>
+        <Active>
+            <Foreground>#FFFFFF</Foreground>
+            <Background>#0077CC</Background>
+        </Active>
+        <Opacity>0.85</Opacity>
+    </MenuStyle>
+
+    <PopupStyle>
+        <Font>Verdana-12</Font>
+        <Foreground>#000000</Foreground>
+        <Background>#999999</Background>
+    </PopupStyle>
+</JWM>

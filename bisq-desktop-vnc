@@ -1,0 +1,25 @@
+#!/bin/bash
+
+set -e
+export DISPLAY=:1
+
+mkdir -p "$HOME/.vnc"
+echo ${VNCPASSWD} | vncpasswd -f > "$HOME/.vnc/passwd"
+chmod 600 "$HOME/.vnc/passwd"
+
+rm -f /tmp/.X${DISPLAY#*:}-lock /tmp/.X11-unix/X${DISPLAY#*:}
+vncserver -geometry 1280x800 $DISPLAY
+
+CLASSPATH="$HOME/lib/*"
+for lib in base controls fxml graphics swing; do
+  CLASSPATH=$CLASSPATH:/usr/share/openjfx/lib/javafx.${lib}.jar;
+done
+
+eval set -- $JAVA_OPTS -classpath "\"$CLASSPATH\"" bisq.desktop.app.BisqAppMain "$BISQ_DESKTOP_OPTS"
+(set -x; exec $JAVA_HOME/bin/java "$@")
+
+vncpid=$(cat "$HOME/.vnc/${HOSTNAME}${DISPLAY}.pid")
+vncserver -kill $DISPLAY
+while kill -0 $vncpid 2>/dev/null; do
+  sleep 1
+done

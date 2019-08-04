@@ -1,0 +1,23 @@
+FROM openjdk:10-jdk-slim as builder
+
+ARG REPOSITORY=bisq-network/bisq
+ARG TAG=v1.1.4
+
+COPY sources.list /etc/apt/
+
+RUN set -ex                                         ; \
+    apt-get update                                  ; \
+    apt-get upgrade -y                              ; \
+    apt-get install -y --no-install-recommends git  ; \
+    rm -rf /var/lib/apt/lists/*                     ; \
+    git clone https://github.com/${REPOSITORY}.git /usr/src/bisq
+
+WORKDIR /usr/src/bisq
+
+RUN set -ex                   ; \
+    git checkout tags/${TAG}  ; \
+    ./gradlew build
+
+FROM scratch
+
+COPY --from=builder /usr/src/bisq/desktop/build/app/lib /

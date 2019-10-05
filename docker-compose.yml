@@ -1,0 +1,48 @@
+version: '3.7'
+
+services:
+  tor:
+    build:
+      context: .
+      dockerfile: Dockerfile.tor
+    image: tor
+    ports:
+      - 8080:8080
+    restart: unless-stopped
+    volumes:
+      - tor-etc:/etc/tor
+      - tor-data:/var/lib/tor
+
+  novnc:
+    build:
+      context: .
+      dockerfile: Dockerfile.novnc
+      args:
+        version: 1.1.0
+    image: novnc
+    command: --auth-plugin BasicHTTPAuth --auth-source ${USERNAME}:${PASSWORD} --web-auth 127.0.0.1:5900
+    restart: unless-stopped
+    network_mode: service:tor
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        version: 1.1.7
+        jar_lib_archive: jar-lib-for-raspberry-pi.zip
+    image: bisq
+    restart: on-failure
+    network_mode: service:tor
+    environment:
+      - TZ
+      - JAVA_OPTS
+      - BISQ_DESKTOP_OPTS
+    volumes:
+      - tor-etc:/etc/tor
+      - user-data:/var/lib/bisq/data
+
+volumes:
+  tor-etc:
+  tor-data:
+  user-data:

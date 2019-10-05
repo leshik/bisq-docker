@@ -1,25 +1,49 @@
 #!/bin/bash
 
-set -e
-export DISPLAY=:1
+# $1 is the pid file path
+# $2 is the signal name
+function stopwait() {
+  test -f "$1" || return 0
+
+  pid=$(cat "$1")
+
+  kill -s "$2" $pid 2>/dev/null
+
+  while kill -0 $pid 2>/dev/null; do
+    sleep 1
+  done
+
+  rm -f "$1"
+}
+
+function cleanup() {
+  trap - TERM
+
+  stopwait "$HOME/bisq.pid" INT
+  stopwait "$HOME/.vnc/${HOSTNAME}${DISPLAY}.pid" TERM
+
+  rm -f /tmp/.X${DISPLAY#*:}-lock /tmp/.X11-unix/X${DISPLAY#*:}
+}
+
+export DISPLAY=:0
 
 mkdir -p "$HOME/.vnc"
-echo ${VNCPASSWD} | vncpasswd -f > "$HOME/.vnc/passwd"
+touch "$HOME/.vnc/passwd"
 chmod 600 "$HOME/.vnc/passwd"
 
-rm -f /tmp/.X${DISPLAY#*:}-lock /tmp/.X11-unix/X${DISPLAY#*:}
-vncserver -geometry 1280x800 $DISPLAY
+classpath="/usr/share/bisq/lib/*"
 
-CLASSPATH="$HOME/lib/*"
 for lib in base controls fxml graphics swing; do
-  CLASSPATH=$CLASSPATH:/usr/share/openjfx/lib/javafx.${lib}.jar;
+  classpath=$classpath:/usr/share/openjfx/lib/javafx.${lib}.jar;
 done
 
-eval set -- $JAVA_OPTS -classpath "\"$CLASSPATH\"" bisq.desktop.app.BisqAppMain "$BISQ_DESKTOP_OPTS"
-(set -x; exec $JAVA_HOME/bin/java "$@")
+tor_opts="--torControlPort=9051 --torControlCookieFile=/etc/tor/control_auth_cookie --torControlUseSafeCookieAuth"
+eval set -- $JAVA_OPTS -classpath "\"$classpath\"" bisq.desktop.app.BisqAppMain --appDataDir="$HOME/data" "$tor_opts" "$BISQ_DESKTOP_OPTS"
 
-vncpid=$(cat "$HOME/.vnc/${HOSTNAME}${DISPLAY}.pid")
-vncserver -kill $DISPLAY
-while kill -0 $vncpid 2>/dev/null; do
-  sleep 1
-done
+trap cleanup EXIT
+
+vncserver $DISPLAY
+(set -x; exec java "$@") &
+pid=$!
+echo $pid > "$HOME/bisq.pid"
+wait $pid

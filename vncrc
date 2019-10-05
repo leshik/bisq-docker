@@ -1,0 +1,3 @@
+$authType = "";
+$fontPath = "/usr/share/fonts/X11/misc";
+$geometry = "1280x800";

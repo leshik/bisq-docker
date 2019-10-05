@@ -1,0 +1,24 @@
+FROM golang:alpine AS builder
+
+RUN apk add --update --no-cache git \
+ && go get git.torproject.org/pluggable-transports/obfs4.git/obfs4proxy \
+ && go get git.torproject.org/pluggable-transports/meek.git/meek-client
+
+FROM alpine:3.10
+
+RUN adduser -S -D -h /var/lib/tor -g tor -u 999 -G nobody tor \
+ && apk add --update --no-cache curl tor \
+ && chown tor /etc/tor
+
+HEALTHCHECK --timeout=10s --start-period=60s \
+            CMD curl -fsSL -I -o /dev/null --socks5-hostname \
+                  127.0.0.1:9050 'https://cdnjs.com' || exit 1
+
+COPY torrc /etc/tor/
+COPY --from=builder /go/bin/ /usr/bin/
+
+USER tor
+
+STOPSIGNAL SIGINT
+
+ENTRYPOINT ["tor", "-f", "/etc/tor/torrc"]

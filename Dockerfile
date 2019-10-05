@@ -1,66 +1,39 @@
-FROM openjdk:10-jre-slim
+FROM debian:buster-slim
 
-ARG TARGETPLATFORM
+ARG version
+ARG jar_lib_archive
 
-ENV VNCPASSWD bisq
-ENV TZ Etc/UTC
 ENV LANG C.UTF-8
+ENV TZ Etc/UTC
 ENV USER bisq
-ENV HOME /home/${USER}
+ENV HOME /var/lib/${USER}
 ENV SHELL /bin/bash
-# ENV JAVA_OPTS -Xms256M -Xmx512M
-# ENV BISQ_DESKTOP_OPTS --maxConnections=6 --msgThrottlePerSec=40 --msgThrottlePer10Sec=200 --numConnectionForBtc=3
 
 COPY sources.list /etc/apt/
-
-RUN set -ex                                     ; \
-    apt-get update                              ; \
-    apt-get upgrade -y                          ; \
-    apt-get install -y --no-install-recommends    \
-      openjfx procps                              \
-      tightvncserver x11-xserver-utils dbus-x11   \
-      jwm xfonts-base ttf-mscorefonts-installer ; \
-    rm -rf /var/lib/apt/lists/*                 ; \
-    useradd -m -s /bin/bash ${USER}
-
 COPY system.jwmrc /etc/jwm/
-COPY --from=bisq:binaries / ${HOME}/lib/
 COPY xstartup ${HOME}/.vnc/
+COPY vncrc ${HOME}/.vncrc
+
+RUN apt-get update && apt-get upgrade -y \
+ && mkdir -p /usr/share/man/man1 \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends -o Dpkg::Options::="--force-confold" \
+      tightvncserver x11-xserver-utils dbus-x11 jwm xfonts-base fonts-liberation2 adwaita-icon-theme \
+      procps wget gpg gpg-agent unzip openjdk-11-jre openjfx \
+ && rm -rf /var/lib/apt/lists/*
+
 COPY bisq-desktop-vnc ${HOME}/
 
-RUN set -ex                                     ; \
-    rm $HOME/lib/javafx-*                       ; \
-    case $TARGETPLATFORM in                       \
-      linux/arm/v7)                               \
-        tor_platform=armhf                        \
-        ;;                                        \
-      linux/arm64)                                \
-        tor_platform=arm64                        \
-        ;;                                        \
-      linux/amd64)                                \
-        tor_platform=linux64                      \
-        ;;                                        \
-      *)                                          \
-        echo "$TARGETPLATFORM is not supported" ; \
-        exit 1                                    \
-        ;;                                        \
-    esac                                        ; \
-    find $HOME/lib                                \
-      -name "tor-binary-*"                        \
-      ! -name "*-geoip-*"                         \
-      ! -name "*-$tor_platform-*"                 \
-      -delete                                   ; \
-    mkdir -p $HOME/.local/share/Bisq            ; \
-    chmod 700 $HOME/.local/share/Bisq           ; \
-    chown -R --reference=$HOME                    \
-      $HOME/.local                                \
-      $HOME/.vnc                                  \
-      $HOME/lib                                   \
-      $HOME/bisq-desktop-vnc
+RUN wget -q -P /tmp https://github.com/bisq-network/bisq/releases/download/v${version}/${jar_lib_archive} \
+ && wget -q -P /tmp https://github.com/bisq-network/bisq/releases/download/v${version}/${jar_lib_archive}.asc \
+ && wget -q -O - https://bisq.network/pubkey/29CDFD3B.asc | gpg --import \
+ && gpg --digest-algo SHA256 --verify /tmp/${jar_lib_archive}.asc \
+ && unzip -d /usr/share/bisq /tmp/${jar_lib_archive} \
+ && rm -rf /usr/share/bisq/lib/javafx-* /usr/share/bisq/lib/tor-binary-* /tmp/* \
+ && useradd -r -g nogroup -d ${HOME} -s ${SHELL} ${USER} \
+ && mkdir ${HOME}/data \
+ && chown -R ${USER}:nogroup ${HOME}
 
-EXPOSE 5901
-WORKDIR ${HOME}
-VOLUME ${HOME}/.local/share/Bisq
 USER ${USER}
+WORKDIR ${HOME}
 
 CMD ["bash", "bisq-desktop-vnc"]

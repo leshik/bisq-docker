@@ -1,0 +1,14 @@
+AvoidDiskWrites 1
+
+ClientTransportPlugin obfs2,obfs3,obfs4,scramblesuit exec /usr/local/bin/obfs4proxy
+ClientTransportPlugin meek exec /usr/local/bin/meek-client
+
+ControlPort 9051
+CookieAuthentication 1
+CookieAuthFile /etc/tor/control_auth_cookie
+
+DataDirectory /var/lib/tor
+Log notice stdout
+
+HiddenServiceDir /var/lib/tor/www
+HiddenServicePort 80 127.0.0.1:8080

@@ -1,0 +1,23 @@
+FROM node:alpine AS builder
+
+ARG version
+
+WORKDIR /usr/src/novnc
+
+RUN apk add --update --no-cache git \
+ && git clone https://github.com/novnc/noVNC.git . \
+ && git checkout tags/"v${version}" -b "v${version}" \
+ && npm install \
+ && utils/use_require.js --with-app --as commonjs
+
+FROM alpine:3.10
+
+COPY --from=builder /usr/src/novnc/build /var/www/novnc
+
+RUN apk add --update --no-cache py3-numpy curl \
+ && pip3 install websockify \
+ && mv /var/www/novnc/vnc.html /var/www/novnc/index.html
+
+USER nobody
+
+ENTRYPOINT ["websockify", "--web", "/var/www/novnc", "8080"]
